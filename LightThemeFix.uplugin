@@ -1,0 +1,19 @@
+{
+	"FileVersion": 3,
+	"Version": 13,
+	"VersionName": "2.6.0",
+	"FriendlyName": "Light Theme Fix",
+	"Description": "A configurable light editor theme with contrast fixes for Blueprint graphs, input fields, tooltips, tabs, animation timelines, and the Content Browser.",
+	"Category": "Editor",
+	"CreatedBy": "LightThemeFix Contributors",
+	"EngineVersion": "5.8.0",
+	"CanContainContent": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "LightThemeFixEditor",
+			"Type": "Editor",
+			"LoadingPhase": "PostDefault"
+		}
+	]
+}

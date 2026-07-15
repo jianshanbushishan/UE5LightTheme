@@ -1,0 +1,9 @@
+/Binaries/
+/Dist/
+/Intermediate/
+/Saved/
+/.vs/
+*.pdb
+*.sln
+*.suo
+*.user
