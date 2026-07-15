@@ -4,6 +4,12 @@ Light Theme Fix is an editor-only Unreal Engine plugin that installs the clean, 
 
 The current binary release targets **Unreal Engine 5.8 on Win64**. The archive also includes source code so it can be rebuilt against another compatible engine build.
 
+## Preview
+
+The Unreal Editor after enabling the bundled **Light** theme and the plugin's contrast fixes:
+
+![Light theme enabled in Unreal Editor](Resources/Themes/screenshot.png)
+
 ## What it fixes
 
 - Focused text in search boxes, numeric fields, editable text boxes, and inline editors
@@ -71,5 +77,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). Visual fixes should be checked in both t
 ## 中文说明
 
 将 `LightThemeFix` 文件夹放到项目的 `Plugins` 目录，启用插件并重启编辑器，然后在“编辑器偏好设置 > 外观 > 应用程序外观”中选择 **Light**。
+
+上方截图展示了启用 Light 主题与插件对比度修复后的编辑器效果。
 
 所有功能开关与颜色参数位于“编辑器偏好设置 > 插件 > Light Theme Fix”。插件只修改编辑器界面，不会改动游戏资产或进入打包后的游戏。若预编译 DLL 与你的 UE 小版本不一致，请删除插件的 `Binaries`、`Intermediate` 后重新编译编辑器目标。
