@@ -21,6 +21,14 @@ public:
 	UPROPERTY(config, EditAnywhere, Category="Theme", meta=(ConfigRestartRequired=true))
 	bool bInstallBundledTheme;
 
+	/** Automatically switch between the bundled Light theme and Unreal's Dark theme to match the Windows app theme. */
+	UPROPERTY(config, EditAnywhere, Category="Theme", meta=(ConfigRestartRequired=true))
+	bool bFollowWindowsTheme;
+
+	/** How often the plugin checks whether the Windows app theme has changed. */
+	UPROPERTY(config, EditAnywhere, Category="Theme", meta=(DisplayName="Windows Theme Check Interval", ClampMin="0.1", ClampMax="10.0", Units="s", ConfigRestartRequired=true, EditCondition="bFollowWindowsTheme"))
+	float WindowsThemeCheckIntervalSeconds;
+
 	/** Apply graph-color and runtime contrast corrections only when the active theme background is light. */
 	UPROPERTY(config, EditAnywhere, Category="Theme")
 	bool bApplyOnlyToLightThemes;

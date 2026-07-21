@@ -17,6 +17,10 @@
 #include "Widgets/Layout/SBorder.h"
 #include "Widgets/Text/STextBlock.h"
 
+#if PLATFORM_WINDOWS
+#include "Windows/WindowsPlatformMisc.h"
+#endif
+
 DEFINE_LOG_CATEGORY_STATIC(LogLightThemeFix, Log, All);
 
 namespace
@@ -24,6 +28,12 @@ namespace
 	constexpr TCHAR PluginName[] = TEXT("LightThemeFix");
 	constexpr TCHAR BundledThemeRelativePath[] = TEXT("Resources/Themes/Light.json");
 	constexpr TCHAR InstalledThemeFileName[] = TEXT("Light.json");
+	constexpr TCHAR WindowsThemeRegistryStore[] = TEXT("Microsoft");
+	constexpr TCHAR WindowsThemeRegistrySection[] = TEXT("Windows\\CurrentVersion\\Themes\\Personalize");
+	constexpr TCHAR WindowsAppsUseLightThemeValue[] = TEXT("AppsUseLightTheme");
+
+	const FGuid BundledLightThemeId(0xA6C86E0F, 0x42D14AA5, 0x9446D15D, 0x57244A78);
+	const FGuid DefaultDarkThemeId(0x13438026, 0x5FBB4A9C, 0xA00A1DC9, 0x770217B8);
 
 	const FName EditableTextType(TEXT("SEditableText"));
 	const FName EditableTextBoxType(TEXT("SEditableTextBox"));
@@ -31,6 +41,27 @@ namespace
 	const FName FilterSearchBoxType(TEXT("SFilterSearchBoxImpl"));
 	const FName MultiLineEditableTextBoxType(TEXT("SMultiLineEditableTextBox"));
 	const FName TextBlockType(TEXT("STextBlock"));
+
+	FGuid FindThemeId(
+		const USlateThemeManager& ThemeManager,
+		const FGuid& PreferredThemeId,
+		const TCHAR* DisplayName)
+	{
+		if (ThemeManager.DoesThemeExist(PreferredThemeId))
+		{
+			return PreferredThemeId;
+		}
+
+		for (const FStyleTheme& Theme : ThemeManager.GetThemes())
+		{
+			if (Theme.DisplayName.ToString().Equals(DisplayName, ESearchCase::IgnoreCase))
+			{
+				return Theme.Id;
+			}
+		}
+
+		return FGuid();
+	}
 
 	bool IsSingleLineTextBox(const FName WidgetType)
 	{
@@ -50,6 +81,7 @@ public:
 		const ULightThemeFixSettings& Settings = *GetDefault<ULightThemeFixSettings>();
 
 		InstallBundledTheme(Settings);
+		ApplyWindowsTheme(Settings);
 		Style.Initialize(Settings);
 		SaveOriginalGraphColors();
 
@@ -65,6 +97,13 @@ public:
 			DynamicContrastTickerHandle = FTSTicker::GetCoreTicker().AddTicker(
 				FTickerDelegate::CreateRaw(this, &FLightThemeFixEditorModule::UpdateDynamicContrast),
 				Settings.TooltipRefreshIntervalSeconds);
+		}
+
+		if (Settings.bFollowWindowsTheme)
+		{
+			WindowsThemeTickerHandle = FTSTicker::GetCoreTicker().AddTicker(
+				FTickerDelegate::CreateRaw(this, &FLightThemeFixEditorModule::UpdateWindowsTheme),
+				Settings.WindowsThemeCheckIntervalSeconds);
 		}
 	}
 
@@ -87,6 +126,12 @@ public:
 		{
 			FTSTicker::GetCoreTicker().RemoveTicker(DynamicContrastTickerHandle);
 			DynamicContrastTickerHandle.Reset();
+		}
+
+		if (WindowsThemeTickerHandle.IsValid())
+		{
+			FTSTicker::GetCoreTicker().RemoveTicker(WindowsThemeTickerHandle);
+			WindowsThemeTickerHandle.Reset();
 		}
 
 		RestoreGraphColors();
@@ -132,6 +177,82 @@ private:
 		{
 			UE_LOG(LogLightThemeFix, Warning, TEXT("Could not install bundled theme from %s"), *SourcePath);
 		}
+	}
+
+	bool UpdateWindowsTheme(float)
+	{
+		if (IsEngineExitRequested())
+		{
+			return true;
+		}
+
+		ApplyWindowsTheme(*GetDefault<ULightThemeFixSettings>());
+		return true;
+	}
+
+	void ApplyWindowsTheme(const ULightThemeFixSettings& Settings)
+	{
+		if (!Settings.bFollowWindowsTheme)
+		{
+			return;
+		}
+
+#if PLATFORM_WINDOWS
+		FString RegistryValue;
+		if (!FWindowsPlatformMisc::GetStoredValue(
+			WindowsThemeRegistryStore,
+			WindowsThemeRegistrySection,
+			WindowsAppsUseLightThemeValue,
+			RegistryValue))
+		{
+			if (!bWindowsThemeReadFailureLogged)
+			{
+				UE_LOG(LogLightThemeFix, Warning, TEXT("Could not read the Windows app theme; automatic theme switching is paused."));
+				bWindowsThemeReadFailureLogged = true;
+			}
+			return;
+		}
+
+		bWindowsThemeReadFailureLogged = false;
+		const bool bUseLightTheme = FCString::Atoi(*RegistryValue) != 0;
+		USlateThemeManager& ThemeManager = USlateThemeManager::Get();
+		const TCHAR* DesiredThemeName = bUseLightTheme ? TEXT("Light") : TEXT("Dark");
+		const FGuid DesiredThemeId = FindThemeId(
+			ThemeManager,
+			bUseLightTheme ? BundledLightThemeId : DefaultDarkThemeId,
+			DesiredThemeName);
+		if (!DesiredThemeId.IsValid())
+		{
+			if (!bMissingThemeWarningLogged)
+			{
+				UE_LOG(
+					LogLightThemeFix,
+					Warning,
+					TEXT("Could not switch to the %s theme because it is not available."),
+					DesiredThemeName);
+				bMissingThemeWarningLogged = true;
+			}
+			return;
+		}
+
+		if (ThemeManager.GetCurrentThemeID() == DesiredThemeId)
+		{
+			return;
+		}
+
+		bMissingThemeWarningLogged = false;
+		ThemeManager.ApplyTheme(DesiredThemeId);
+
+		UEditorStyleSettings* EditorStyleSettings = GetMutableDefault<UEditorStyleSettings>();
+		EditorStyleSettings->CurrentAppliedTheme = DesiredThemeId;
+		EditorStyleSettings->SaveConfig();
+
+		UE_LOG(
+			LogLightThemeFix,
+			Log,
+			TEXT("Switched Unreal Editor to the %s theme to match Windows."),
+			DesiredThemeName);
+#endif
 	}
 
 	void SaveOriginalGraphColors()
@@ -324,8 +445,11 @@ private:
 	FLinearColor OriginalCenterColor;
 	FLinearColor OriginalExecutionPinTypeColor;
 	FTSTicker::FDelegateHandle DynamicContrastTickerHandle;
+	FTSTicker::FDelegateHandle WindowsThemeTickerHandle;
 	bool bThemeDelegateRegistered = false;
 	bool bHasSavedGraphColors = false;
+	bool bWindowsThemeReadFailureLogged = false;
+	bool bMissingThemeWarningLogged = false;
 };
 
 IMPLEMENT_MODULE(FLightThemeFixEditorModule, LightThemeFixEditor)

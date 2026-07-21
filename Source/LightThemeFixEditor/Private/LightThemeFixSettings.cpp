@@ -10,6 +10,8 @@ namespace
 
 ULightThemeFixSettings::ULightThemeFixSettings()
 	: bInstallBundledTheme(true)
+	, bFollowWindowsTheme(true)
+	, WindowsThemeCheckIntervalSeconds(1.0f)
 	, bApplyOnlyToLightThemes(true)
 	, LightThemeLuminanceThreshold(0.5f)
 	, bFixComboBoxRows(true)

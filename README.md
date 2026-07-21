@@ -2,6 +2,8 @@
 
 Light Theme Fix is an editor-only Unreal Engine plugin that installs the clean, neutral **Light** theme and repairs low-contrast Slate widgets that a color-theme JSON cannot style reliably.
 
+By default, the plugin also follows Windows' default app mode: Unreal switches to the bundled **Light** theme in Windows light mode and Unreal's standard **Dark** theme in Windows dark mode. Changes are detected while the editor is running.
+
 The current binary release targets **Unreal Engine 5.8 on Win64**. The archive also includes source code so it can be rebuilt against another compatible engine build.
 
 ## Preview
@@ -29,14 +31,15 @@ Every feature can be enabled independently. Colors, luminance threshold, node ge
    - `<YourProject>/Plugins/LightThemeFix/LightThemeFix.uplugin`
    - `<YourEngine>/Engine/Plugins/Marketplace/LightThemeFix/LightThemeFix.uplugin`
 3. Enable **Light Theme Fix** in the Plugins panel and restart the editor.
-4. Open **Editor Preferences > Appearance > Application Appearance**.
-5. Select **Light**.
+4. Unreal automatically selects **Light** or **Dark** to match Windows. To choose a theme manually, disable **Follow Windows Theme** under **Editor Preferences > Plugins > Light Theme Fix** and restart the editor.
 
 The bundled theme is copied once to the current user's Unreal theme directory. Existing copies are intentionally preserved so local theme edits are never overwritten.
 
 ## Configuration
 
 Open **Editor Preferences > Plugins > Light Theme Fix**. Settings marked as restart-required rebuild the parent Slate style at the next editor launch. Graph grid and execution-wire colors update with theme changes; tooltip and focused-input corrections run only while their feature switches are enabled.
+
+`Follow Windows Theme` is enabled by default and reads Windows' `AppsUseLightTheme` preference at startup and at the configured check interval. Automatic switches are persisted to Unreal's application-appearance setting, so the preference page stays in sync.
 
 `Apply Only to Light Themes` is enabled by default. It gates graph grid/wire colors and runtime tooltip/input corrections when Unreal's dark theme is active. Parent-style changes marked as restart-required are installed at startup, so disable their individual feature switches if you do not want those overrides.
 
@@ -76,7 +79,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). Visual fixes should be checked in both t
 
 ## 中文说明
 
-将 `LightThemeFix` 文件夹放到项目的 `Plugins` 目录，启用插件并重启编辑器，然后在“编辑器偏好设置 > 外观 > 应用程序外观”中选择 **Light**。
+将 `LightThemeFix` 文件夹放到项目的 `Plugins` 目录，启用插件并重启编辑器。插件默认跟随 Windows 的应用主题：浅色模式自动使用 **Light**，深色模式自动使用 **Dark**，并会在编辑器运行期间响应系统主题变化。如需手动选择主题，请在“编辑器偏好设置 > 插件 > Light Theme Fix”中关闭 **Follow Windows Theme** 后重启编辑器。
 
 上方截图展示了启用 Light 主题与插件对比度修复后的编辑器效果。
 

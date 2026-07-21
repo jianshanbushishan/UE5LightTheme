@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.7.1
+
+- Added a display-name fallback when resolving Light and Dark themes, preserving automatic switching for existing user theme files created with an older theme ID.
+
+## 2.7.0
+
+- Added automatic Windows app-theme synchronization between the bundled Light theme and Unreal's default Dark theme.
+- Added settings for enabling Windows theme following and configuring its runtime check interval.
+- Kept Unreal's application-appearance setting synchronized with automatic theme changes.
+
 ## 2.6.0
 
 - Renamed the bundled theme and its installed file to `Light` / `Light.json`.
