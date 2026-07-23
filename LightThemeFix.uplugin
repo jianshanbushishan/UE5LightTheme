@@ -1,9 +1,9 @@
 {
 	"FileVersion": 3,
-	"Version": 18,
-	"VersionName": "2.8.1",
+	"Version": 22,
+	"VersionName": "2.9.3",
 	"FriendlyName": "Light Theme Fix",
-	"Description": "A configurable light editor theme with Windows light/dark theme syncing and contrast fixes for Blueprint graphs, input fields, tooltips, Live Coding, tabs, animation timelines, and the Content Browser.",
+	"Description": "A configurable light editor theme with Windows light/dark theme syncing and contrast fixes for Blueprint graphs, Scene Outliner, input fields, tooltips, Live Coding, tabs, animation timelines, and the Content Browser.",
 	"Category": "Editor",
 	"CreatedBy": "LightThemeFix Contributors",
 	"EngineVersion": "5.8.0",

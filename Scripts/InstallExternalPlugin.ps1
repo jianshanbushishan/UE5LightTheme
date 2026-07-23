@@ -2,7 +2,9 @@
 param(
 	[string] $InstallRoot,
 
-	[switch] $SkipUserEnvironmentRegistration
+	[switch] $SkipUserEnvironmentRegistration,
+
+	[switch] $AllowRunningLauncher
 )
 
 $ErrorActionPreference = 'Stop'
@@ -129,6 +131,13 @@ if ($null -ne $editorProcess) {
 	throw 'Close all Unreal Editor instances before installing or updating Light Theme Fix.'
 }
 
+$launcherProcess = Get-Process -Name 'EpicGamesLauncher' -ErrorAction SilentlyContinue
+if ($null -ne $launcherProcess -and
+	-not $SkipUserEnvironmentRegistration -and
+	-not $AllowRunningLauncher) {
+	throw 'Exit Epic Games Launcher completely, including its tray process, before installing. A running launcher cannot inherit the new UE_ADDITIONAL_PLUGIN_PATHS value and projects opened from it will not load Light Theme Fix. Pass -AllowRunningLauncher only if you will restart the launcher before opening Unreal Editor.'
+}
+
 $binaryPattern = 'UnrealEditor-LightThemeFixEditor*.dll'
 if (-not (Get-ChildItem -LiteralPath (Join-Path $pluginRoot 'Binaries\Win64') -Filter $binaryPattern -File -ErrorAction SilentlyContinue)) {
 	throw 'No precompiled Win64 editor binary was found. Install from a release archive built for this Unreal Engine version.'
@@ -218,7 +227,7 @@ if ($SkipUserEnvironmentRegistration) {
 	Write-Host 'The user environment variable was not changed. Set it in the process that launches Unreal Editor.'
 }
 else {
-	if (Get-Process -Name 'EpicGamesLauncher' -ErrorAction SilentlyContinue) {
+	if ($null -ne $launcherProcess) {
 		Write-Warning 'Epic Games Launcher is running with its previous environment. Exit it completely, including its tray process, before reopening Unreal Editor.'
 	}
 	Write-Host 'Restart Unreal Editor and the process used to launch it so they inherit the updated user environment.'

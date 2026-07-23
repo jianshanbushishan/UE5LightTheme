@@ -19,6 +19,8 @@ The Unreal Editor after enabling the bundled **Light** theme and the plugin's co
 - Blueprint graph background, grid, breadcrumbs, node bodies, titles, and execution wires
 - Animation Editor timeline rows and labels
 - Content Browser hover and selection states
+- Scene Outliner labels and icons for actors spawned only during Play In Editor
+- Details panel object-name and constant-label text hard-coded to white by UE 5.8
 - Tooltip text created after editor startup
 - Late editor shutdown without accessing `CoreUObject` after engine exit begins
 
@@ -29,7 +31,7 @@ Every feature can be enabled independently. Colors, luminance threshold, node ge
 Releases are designed to be installed as precompiled external plugins discovered through `UE_ADDITIONAL_PLUGIN_PATHS`. This keeps the plugin outside individual projects and outside the Unreal Engine installation.
 
 1. Download and extract the release archive built for your exact Unreal Engine version.
-2. Close all Unreal Editor instances.
+2. Close all Unreal Editor instances and exit Epic Games Launcher completely, including its tray process. The installer enforces this because an already-running Launcher cannot inherit the new external-plugin search path.
 3. Run the installer from the extracted plugin directory:
 
    ```powershell
@@ -47,6 +49,8 @@ For example, a release whose descriptor declares `EngineVersion` as `5.8.0` uses
 The installer preserves existing entries and adds the version-specific `ExternalPlugins` directory to the current user's `UE_ADDITIONAL_PLUGIN_PATHS`. Packaged releases are marked `Installed` and `EnabledByDefault`, so projects do not need their own plugin copy or a `LightThemeFix` entry in each `.uproject` file. Restart Unreal Editor and any launcher process after installation so they inherit the updated environment.
 
 Environment variables are inherited when a process starts. The installer broadcasts the Windows environment-change notification for newly launched desktop processes, but an already-running Epic Games Launcher retains its old environment. Exit it completely—including its tray process—before reopening Unreal Editor. Merely closing and reopening a project from the same launcher process will retain the old plugin search path.
+
+The installer stops with an actionable error if Epic Games Launcher is still running. `-AllowRunningLauncher` bypasses that guard for scripted deployments, but the Launcher must still be restarted before it opens an Unreal project.
 
 To use another external plugin root:
 
@@ -74,7 +78,7 @@ Open **Editor Preferences > Plugins > Light Theme Fix**. Settings marked as rest
 
 `Follow Windows Theme` is enabled by default and reads Windows' `AppsUseLightTheme` preference at startup and at the configured check interval. Automatic switches are persisted to Unreal's application-appearance setting, so the preference page stays in sync.
 
-`Apply Only to Light Themes` is enabled by default. It gates graph grid/wire colors and runtime tooltip/input corrections when Unreal's dark theme is active. Parent-style changes marked as restart-required are installed at startup, so disable their individual feature switches if you do not want those overrides.
+`Apply Only to Light Themes` is enabled by default. When Unreal switches to a dark theme, the plugin restores its parent Slate styles in place, redirects new style lookups back to Unreal's standard app style, restores graph colors, and disables runtime tooltip/input/Scene Outliner corrections. Switching back to Light re-enables the configured fixes without restarting the editor.
 
 ## Building from source
 
@@ -91,6 +95,7 @@ The script runs Unreal Automation Tool's `BuildPlugin`, creates a versioned zip 
 ## Troubleshooting
 
 - **The theme is not listed:** verify the plugin loaded, then restart the editor. The installed file is named `Light.json` in Unreal's per-user theme directory.
+- **The plugin works only in the project that contains its source:** exit Epic Games Launcher completely and rerun the installer. Check the target project's log for `Mounting External plugin LightThemeFix` and `LightThemeFixEditor.dll`.
 - **Unreal reports incompatible binaries:** use a release built for the exact engine version, or delete the plugin's `Binaries` and `Intermediate` directories and compile the Editor target locally.
 - **A search field still uses white focused text:** include the editor panel, engine version, and a screenshot in the issue. Some editor modules use concrete Slate subclasses rather than the base `SEditableTextBox` type.
 - **A setting appears unchanged:** options with the restart marker are captured when the Slate parent style is created and require an editor restart.

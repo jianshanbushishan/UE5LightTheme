@@ -13,6 +13,7 @@ public class LightThemeFixEditor : ModuleRules
 			"DeveloperSettings",
 			"GraphEditor",
 			"Projects",
+			"SceneOutliner",
 			"Slate",
 			"SlateCore",
 			"UnrealEd"

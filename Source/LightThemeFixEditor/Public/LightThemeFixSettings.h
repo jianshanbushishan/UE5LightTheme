@@ -58,6 +58,14 @@ public:
 	UPROPERTY(config, EditAnywhere, Category="Features", meta=(ConfigRestartRequired=true))
 	bool bFixFocusedInputText;
 
+	/** Replace Details panel object-name and constant-label white text with the theme foreground color. */
+	UPROPERTY(config, EditAnywhere, Category="Features", meta=(ConfigRestartRequired=true))
+	bool bFixDetailsPanelText;
+
+	/** Replace UE's hard-coded pale yellow for actors spawned only in Play In Editor. */
+	UPROPERTY(config, EditAnywhere, Category="Features", meta=(ConfigRestartRequired=true))
+	bool bFixPIEActorLabels;
+
 	/** Use a light surface for the Live Coding compile progress dialog. */
 	UPROPERTY(config, EditAnywhere, Category="Features")
 	bool bFixLiveCodingDialog;
@@ -124,6 +132,10 @@ public:
 	/** Text color used while typing in input fields with a light focused background. */
 	UPROPERTY(config, EditAnywhere, Category="Input Fields", meta=(HideAlphaChannel, ConfigRestartRequired=true))
 	FLinearColor FocusedInputTextColor;
+
+	/** Foreground color for actors that exist only in the Play In Editor world. */
+	UPROPERTY(config, EditAnywhere, Category="Scene Outliner", meta=(HideAlphaChannel))
+	FLinearColor PIEActorLabelColor;
 
 	/** Background color for the Live Coding compile progress dialog. */
 	UPROPERTY(config, EditAnywhere, Category="Live Coding", meta=(HideAlphaChannel))
