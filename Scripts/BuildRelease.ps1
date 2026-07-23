@@ -63,6 +63,19 @@ if ($LASTEXITCODE -ne 0) {
 	throw "BuildPlugin failed with exit code $LASTEXITCODE."
 }
 
+# BuildPlugin deliberately clears EnabledByDefault in packaged descriptors.
+# External plugins discovered through UE_ADDITIONAL_PLUGIN_PATHS should load
+# without requiring an entry in every project's .uproject file, so restore the
+# distribution flags after UAT has produced the package.
+$packagedDescriptor = Join-Path $packageDirectory 'LightThemeFix.uplugin'
+if (-not (Test-Path -LiteralPath $packagedDescriptor -PathType Leaf)) {
+	throw "Packaged plugin descriptor not found: $packagedDescriptor"
+}
+$packagedDescriptorJson = Get-Content -LiteralPath $packagedDescriptor -Raw | ConvertFrom-Json
+$packagedDescriptorJson | Add-Member -MemberType NoteProperty -Name EnabledByDefault -Value $true -Force
+$packagedDescriptorJson | Add-Member -MemberType NoteProperty -Name Installed -Value $true -Force
+$packagedDescriptorJson | ConvertTo-Json -Depth 100 | Set-Content -LiteralPath $packagedDescriptor -Encoding UTF8
+
 if (-not $IncludeDebugSymbols) {
 	Get-ChildItem -LiteralPath $packageDirectory -Filter '*.pdb' -File -Recurse |
 		Remove-Item -Force

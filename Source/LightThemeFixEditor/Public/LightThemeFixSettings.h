@@ -5,7 +5,7 @@
 #include "LightThemeFixSettings.generated.h"
 
 /** User-configurable contrast fixes for light Unreal Editor themes. */
-UCLASS(config=EditorPerProjectUserSettings, defaultconfig, meta=(DisplayName="Light Theme Fix"))
+UCLASS(config=EditorSettings, defaultconfig, meta=(DisplayName="Light Theme Fix"))
 class LIGHTTHEMEFIXEDITOR_API ULightThemeFixSettings final : public UDeveloperSettings
 {
 	GENERATED_BODY()
@@ -57,6 +57,10 @@ public:
 
 	UPROPERTY(config, EditAnywhere, Category="Features", meta=(ConfigRestartRequired=true))
 	bool bFixFocusedInputText;
+
+	/** Use a light surface for the Live Coding compile progress dialog. */
+	UPROPERTY(config, EditAnywhere, Category="Features")
+	bool bFixLiveCodingDialog;
 
 	UPROPERTY(config, EditAnywhere, Category="Blueprint Graph", meta=(HideAlphaChannel, ConfigRestartRequired=true))
 	FLinearColor NodeBodyColor;
@@ -120,6 +124,17 @@ public:
 	/** Text color used while typing in input fields with a light focused background. */
 	UPROPERTY(config, EditAnywhere, Category="Input Fields", meta=(HideAlphaChannel, ConfigRestartRequired=true))
 	FLinearColor FocusedInputTextColor;
+
+	/** Background color for the Live Coding compile progress dialog. */
+	UPROPERTY(config, EditAnywhere, Category="Live Coding", meta=(HideAlphaChannel))
+	FLinearColor LiveCodingDialogBackgroundColor;
+
+	/** Foreground color for the Live Coding compile progress dialog. */
+	UPROPERTY(config, EditAnywhere, Category="Live Coding", meta=(HideAlphaChannel))
+	FLinearColor LiveCodingDialogTextColor;
+
+	UPROPERTY(config, EditAnywhere, Category="Live Coding", meta=(ClampMin="0.0", ClampMax="32.0"))
+	float LiveCodingDialogCornerRadius;
 
 	UPROPERTY(config, EditAnywhere, Category="Tooltips", meta=(HideAlphaChannel))
 	FLinearColor TooltipTextColor;

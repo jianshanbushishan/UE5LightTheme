@@ -1,5 +1,24 @@
 # Changelog
 
+## 2.8.1
+
+- Fixed the installer migration from the legacy `%LOCALAPPDATA%\UnrealEngine\ExternalPlugins\UE_{Version}` search path to `%LOCALAPPDATA%\UnrealEngine\{Version}\ExternalPlugins`.
+- Normalized installed descriptors to `Installed=true` and `EnabledByDefault=true`, including installations made directly from built source checkouts.
+- Allowed the installer to repair and register a plugin that is already located in its default external-plugin directory.
+- Added an explicit warning when Epic Games Launcher is still running with an environment that predates the installation.
+- Broadcast the Windows environment-change notification so newly launched desktop processes inherit the registered search path.
+
+## 2.8.0
+
+- Made packaged releases installable as precompiled external plugins discovered through `UE_ADDITIONAL_PLUGIN_PATHS`.
+- Marked release descriptors as installed and enabled by default so projects no longer need individual plugin references.
+- Added a PowerShell installer that uses a versioned per-user plugin directory and preserves existing external-plugin search paths.
+- Moved preferences to the user-and-engine `EditorSettings` config so one configuration applies across projects opened by the same engine version.
+
+## 2.7.2
+
+- Added configurable contrast corrections for the Live Coding progress dialog.
+
 ## 2.7.1
 
 - Added a display-name fallback when resolving Light and Dark themes, preserving automatic switching for existing user theme files created with an older theme ID.

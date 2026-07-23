@@ -7,8 +7,10 @@
 #include "LightThemeFixSettings.h"
 #include "LightThemeFixStyle.h"
 #include "Misc/CoreMisc.h"
+#include "Misc/CoreDelegates.h"
 #include "Modules/ModuleManager.h"
 #include "Settings/EditorStyleSettings.h"
+#include "Styling/AppStyle.h"
 #include "Styling/StyleColors.h"
 #include "Widgets/SWindow.h"
 #include "Widgets/Input/SEditableText.h"
@@ -41,6 +43,9 @@ namespace
 	const FName FilterSearchBoxType(TEXT("SFilterSearchBoxImpl"));
 	const FName MultiLineEditableTextBoxType(TEXT("SMultiLineEditableTextBox"));
 	const FName TextBlockType(TEXT("STextBlock"));
+	const FName SlowTaskWidgetType(TEXT("SSlowTaskWidget"));
+	const FName LiveCodingProgressDialogBackgroundStyleName(
+		TEXT("LightThemeFix.LiveCoding.ProgressDialogBackground"));
 
 	FGuid FindThemeId(
 		const USlateThemeManager& ThemeManager,
@@ -85,6 +90,9 @@ public:
 		Style.Initialize(Settings);
 		SaveOriginalGraphColors();
 
+		FCoreDelegates::PreSlateModalWithContext.AddRaw(this, &FLightThemeFixEditorModule::HandlePreSlateModal);
+		bPreSlateModalDelegateRegistered = true;
+
 		if (Settings.bFixBlueprintGraph)
 		{
 			USlateThemeManager::Get().OnThemeChanged().AddRaw(this, &FLightThemeFixEditorModule::HandleThemeChanged);
@@ -92,7 +100,7 @@ public:
 			ApplyGraphColors();
 		}
 
-		if (Settings.bFixTooltipText || Settings.bFixFocusedInputText)
+		if (Settings.bFixTooltipText || Settings.bFixFocusedInputText || Settings.bFixLiveCodingDialog)
 		{
 			DynamicContrastTickerHandle = FTSTicker::GetCoreTicker().AddTicker(
 				FTickerDelegate::CreateRaw(this, &FLightThemeFixEditorModule::UpdateDynamicContrast),
@@ -120,6 +128,12 @@ public:
 		{
 			USlateThemeManager::Get().OnThemeChanged().RemoveAll(this);
 			bThemeDelegateRegistered = false;
+		}
+
+		if (bPreSlateModalDelegateRegistered)
+		{
+			FCoreDelegates::PreSlateModalWithContext.RemoveAll(this);
+			bPreSlateModalDelegateRegistered = false;
 		}
 
 		if (DynamicContrastTickerHandle.IsValid())
@@ -276,6 +290,32 @@ private:
 		ApplyGraphColors();
 	}
 
+	void HandlePreSlateModal(const FCoreDelegates::FModalWindowContext& Context) const
+	{
+		if (IsEngineExitRequested() || !Context.bIsSlowTaskWindow.Get(false))
+		{
+			return;
+		}
+
+		const ULightThemeFixSettings& Settings = *GetDefault<ULightThemeFixSettings>();
+		if (!Settings.bFixLiveCodingDialog)
+		{
+			return;
+		}
+
+		// In UE 5.8, FSlateApplication passes the address of the SWindow through
+		// WindowIdentifier immediately after its content has been assigned and
+		// before the slow-task window is first drawn.
+		SWindow* const ModalWindow = reinterpret_cast<SWindow*>(Context.WindowIdentifier);
+		if (ModalWindow != nullptr)
+		{
+			ApplyLiveCodingDialogStyle(
+				ModalWindow->GetContent(),
+				Settings,
+				ShouldApplyToCurrentTheme(Settings));
+		}
+	}
+
 	bool UpdateDynamicContrast(float) const
 	{
 		// The ticker can run while editor shutdown is already in progress. Keep
@@ -307,6 +347,17 @@ private:
 		if (Settings.bFixFocusedInputText)
 		{
 			ApplyFocusedInputTextColor(Settings);
+		}
+
+		if (Settings.bFixLiveCodingDialog)
+		{
+			const bool bUseLightDialogStyle = ShouldApplyToCurrentTheme(Settings);
+			TArray<TSharedRef<SWindow>> VisibleWindows;
+			FSlateApplication::Get().GetAllVisibleWindowsOrdered(VisibleWindows);
+			for (const TSharedRef<SWindow>& Window : VisibleWindows)
+			{
+				ApplyLiveCodingDialogStyle(Window, Settings, bUseLightDialogStyle);
+			}
 		}
 
 		return true;
@@ -393,6 +444,34 @@ private:
 		}
 	}
 
+	static void ApplyLiveCodingDialogStyle(
+		const TSharedRef<SWidget>& Widget,
+		const ULightThemeFixSettings& Settings,
+		const bool bUseLightDialogStyle)
+	{
+		if (Widget->GetType() == SlowTaskWidgetType)
+		{
+			const TSharedRef<SBorder> Dialog = StaticCastSharedRef<SBorder>(Widget);
+			Dialog->SetBorderImage(
+				FAppStyle::GetBrush(
+					bUseLightDialogStyle
+						? LiveCodingProgressDialogBackgroundStyleName
+						: FName(TEXT("Brushes.Header"))));
+			Dialog->SetForegroundColor(
+				bUseLightDialogStyle ? FSlateColor(Settings.LiveCodingDialogTextColor) : FSlateColor::UseForeground());
+			Dialog->Invalidate(EInvalidateWidgetReason::Paint);
+			return;
+		}
+
+		if (FChildren* Children = Widget->GetChildren())
+		{
+			for (int32 ChildIndex = 0; ChildIndex < Children->Num(); ++ChildIndex)
+			{
+				ApplyLiveCodingDialogStyle(Children->GetChildAt(ChildIndex), Settings, bUseLightDialogStyle);
+			}
+		}
+	}
+
 	static bool ShouldApplyToCurrentTheme(const ULightThemeFixSettings& Settings)
 	{
 		if (!Settings.bApplyOnlyToLightThemes)
@@ -447,6 +526,7 @@ private:
 	FTSTicker::FDelegateHandle DynamicContrastTickerHandle;
 	FTSTicker::FDelegateHandle WindowsThemeTickerHandle;
 	bool bThemeDelegateRegistered = false;
+	bool bPreSlateModalDelegateRegistered = false;
 	bool bHasSavedGraphColors = false;
 	bool bWindowsThemeReadFailureLogged = false;
 	bool bMissingThemeWarningLogged = false;

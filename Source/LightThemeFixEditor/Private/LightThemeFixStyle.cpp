@@ -153,6 +153,12 @@ void FLightThemeFixStyle::Initialize(const ULightThemeFixSettings& Settings)
 		SetFocusedInputTextColors(*Style, Settings);
 	}
 
+	Style->Set(
+		TEXT("LightThemeFix.LiveCoding.ProgressDialogBackground"),
+		new FSlateRoundedBoxBrush(
+			Settings.LiveCodingDialogBackgroundColor,
+			Settings.LiveCodingDialogCornerRadius));
+
 	if (Settings.bFixBlueprintGraph)
 	{
 		FTextBlockStyle NodeTitle = FAppStyle::Get().GetWidgetStyle<FTextBlockStyle>(TEXT("Graph.Node.NodeTitle"));
